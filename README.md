@@ -42,6 +42,8 @@ go run src/scoop.go -from <from-queue-name> -to <to-queue-name> -count <number-o
 - `to` - The queue name to deliver messages to (required)
 - `count` - The _maximum_ number of messages to move (default: `1`)
 - `v` - Turn on verbose mode (default: `false`)
+- `vv` - Turn on very verbose mode (default: `false`)
+- `vvv` - Turn on extremely verbose mode (default: `false`)
 
 ## Notes
 
