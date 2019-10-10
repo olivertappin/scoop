@@ -28,11 +28,11 @@ func init() {
 func main() {
 
     if (*extremelyVerbose) {
-        log.Printf("Extremely verbose mode enabled")        
+        log.Printf("Extremely verbose mode enabled")
     } else if (*veryVerbose) {
-        log.Printf("Very verbose mode enabled")        
+        log.Printf("Very verbose mode enabled")
     } else if (*verbose) {
-        log.Printf("Verbose mode enabled")        
+        log.Printf("Verbose mode enabled")
     }
 
     // Set the verbose modes accordingly
@@ -40,7 +40,7 @@ func main() {
         *veryVerbose = true
         *verbose = true
     } else if (*veryVerbose) {
-       *verbose = true   
+       *verbose = true
     }
 
     if (*fromQueueName == "") {
