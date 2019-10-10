@@ -40,6 +40,7 @@ go run src/scoop.go -from <from-queue-name> -to <to-queue-name> -count <number-o
 - `port` - The port to connect to (default: `5672`)
 - `from` - The queue name to consume messages from (required)
 - `to` - The queue name to deliver messages to (required)
+- `exchange` - The exchange name to deliver messages through (default: `""`)
 - `count` - The _maximum_ number of messages to move (default: `1`)
 - `v` - Turn on verbose mode (default: `false`)
 - `vv` - Turn on very verbose mode (default: `false`)
