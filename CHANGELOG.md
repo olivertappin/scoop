@@ -4,7 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2019-10-10
+### Added
+- New parameter to define durable queues.
+- Missing `exchange` parameter to `README.md`.
+
+### Changed
+- Remove unnecessary whitespace from `src/scoop.go` source.
+- Add full-stops to all `CHANGELOG.md` lines for consistency.
+
 ## [1.0.0] - 2019-10-03
 ### Added
-- Basic arguments for command line scooping
+- Basic arguments for command line scooping.
 - Native workaround documented within the `README.md` as suggested by [@EagleEyeJohn](https://github.com/EagleEyeJohn).
