@@ -14,6 +14,7 @@ var (
     port             = flag.String("port", "5672", "Port")
     fromQueueName    = flag.String("from", "", "The queue name to consume messages from")
     toQueueName      = flag.String("to", "", "The queue name to deliver messages to")
+    durable          = flag.Bool("durable", false, "Define the queue decleration to be durable")
     exchange         = flag.String("exchange", "", "The exchange name to deliver messages through")
     messageCount     = flag.Int("count", 1, "The number of messages to move between queues")
     verbose          = flag.Bool("v", false, "Turn on verbose mode")
@@ -69,7 +70,7 @@ func main() {
 
     fromQueue, err := ch.QueueDeclare(
         *fromQueueName, // name
-        false,          // durable
+        *durable,       // durable
         false,          // delete when unused
         false,          // exclusive
         false,          // no-wait
@@ -83,7 +84,7 @@ func main() {
 
     toQueue, err := ch.QueueDeclare(
         *toQueueName, // name
-        false,        // durable
+        *durable,     // durable
         false,        // delete when unused
         false,        // exclusive
         false,        // no-wait
