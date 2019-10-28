@@ -3,9 +3,25 @@ package main
 import (
     "log"
     "flag"
+    "os"
     "fmt"
+    "strings"
+    "strconv"
     "github.com/streadway/amqp"
 )
+
+type arrayFlags []string
+
+func (i *arrayFlags) String() string {
+	return ""
+}
+
+func (i *arrayFlags) Set(value string) error {
+	*i = append(*i, value)
+	return nil
+}
+
+var arguments arrayFlags
 
 var (
     username         = flag.String("username", "guest", "Username")
@@ -14,7 +30,7 @@ var (
     port             = flag.String("port", "5672", "Port")
     fromQueueName    = flag.String("from", "", "The queue name to consume messages from")
     toQueueName      = flag.String("to", "", "The queue name to deliver messages to")
-    durable          = flag.Bool("durable", false, "Define the queue decleration to be durable")
+    durable          = flag.Bool("durable", false, "Define the queue deceleration to be durable")
     exchange         = flag.String("exchange", "", "The exchange name to deliver messages through")
     messageCount     = flag.Int("count", 1, "The number of messages to move between queues")
     verbose          = flag.Bool("v", false, "Turn on verbose mode")
@@ -23,33 +39,66 @@ var (
 )
 
 func init() {
+    flag.Var(&arguments, "arg", "Argument(s) to pass to the queue deceleration")
     flag.Parse()
 }
 
 func main() {
-
-    if (*extremelyVerbose) {
+    if *extremelyVerbose {
         log.Printf("Extremely verbose mode enabled")
-    } else if (*veryVerbose) {
+    } else if *veryVerbose {
         log.Printf("Very verbose mode enabled")
-    } else if (*verbose) {
+    } else if *verbose {
         log.Printf("Verbose mode enabled")
     }
 
     // Set the verbose modes accordingly
-    if (*extremelyVerbose) {
+    if *extremelyVerbose {
         *veryVerbose = true
         *verbose = true
-    } else if (*veryVerbose) {
+    } else if *veryVerbose {
        *verbose = true
     }
 
-    if (*fromQueueName == "") {
+    if *fromQueueName == "" {
         log.Printf("The from argument must be defined")
+        os.Exit(2)
     }
 
-    if (*toQueueName == "") {
+    if *toQueueName == "" {
         log.Printf("The to argument must be defined")
+        os.Exit(2)
+    }
+
+    if *fromQueueName == *toQueueName {
+        log.Printf("The from queue name matches the to queue name")
+        os.Exit(2)
+    }
+
+    args := make(amqp.Table)
+    for _, argument := range arguments {
+        parts := strings.Split(argument, ":")
+        key, value := strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
+
+        // Keep values as strings where the keys expect it
+        if key == "x-overflow" || key == "x-queue-mode" || key == "x-queue-master-locator" {
+            args[key] = value
+            continue
+        }
+
+        // Cast values to integers where the keys expect it
+        i, err := strconv.Atoi(value)
+        if err != nil {
+            log.Fatalf("Argument with key \"%s\" does not have a valid integer value. Received: \"%s\"", key, value)
+        }
+        args[key] = i
+	}
+
+    if *extremelyVerbose && len(args) != 0 {
+        log.Printf("Declaring queues with the following arguments:")
+        for _, argument := range arguments {
+            log.Println("-", argument);
+        }
     }
 
     conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s/", *username, *password, *hostname, *port))
@@ -60,7 +109,7 @@ func main() {
     failOnError(err, "Failed to open a channel")
     defer ch.Close()
 
-    if (*verbose) {
+    if *verbose {
         log.Printf("Moving %d messages from queue %s to %s", *messageCount, *fromQueueName, *toQueueName)
     }
 
@@ -74,11 +123,11 @@ func main() {
         false,          // delete when unused
         false,          // exclusive
         false,          // no-wait
-        nil,            // arguments
+        args,           // arguments
     )
     failOnError(err, "Failed to declare a queue")
 
-    if (*veryVerbose) {
+    if *veryVerbose {
         log.Printf("There are %d messages in queue %s", fromQueue.Messages, fromQueue.Name)
     }
 
@@ -88,11 +137,11 @@ func main() {
         false,        // delete when unused
         false,        // exclusive
         false,        // no-wait
-        nil,          // arguments
+        args,         // arguments
     )
     failOnError(err, "Failed to declare a queue")
 
-    if (*veryVerbose) {
+    if *veryVerbose {
         log.Printf("There are %d messages in queue %s", toQueue.Messages, toQueue.Name)
     }
 
@@ -112,8 +161,8 @@ func main() {
     i := 1
 
     for d := range msgs {
-        if (i > *messageCount) {
-            if (*extremelyVerbose) {
+        if i > *messageCount {
+            if *extremelyVerbose {
                 log.Printf("Complete")
             }
             break
@@ -131,7 +180,7 @@ func main() {
 
         failOnError(err, "Failed to deliver message")
 
-        if (*extremelyVerbose) {
+        if *extremelyVerbose {
             log.Printf("Successfully delivered message (%d/%d)", i, *messageCount)
         }
 
