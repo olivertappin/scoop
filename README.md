@@ -95,11 +95,11 @@ https://www.rabbitmq.com/maxlength.html#definition-using-x-args
 Sets the queue overflow behaviour. This determines what happens to messages when the maximum length of a queue is reached. Valid values are `drop-head` or `reject-publish`.<br>
 https://www.rabbitmq.com/maxlength.html#overflow-behaviour
 
-#### `x-dead-letter-exchange` (number)<br>
+#### `x-dead-letter-exchange` (string)<br>
 Optional name of an exchange to which messages will be republished if they are rejected or expire.<br>
 https://www.rabbitmq.com/dlx.html
 
-#### `x-dead-letter-routing-key` (number)<br>
+#### `x-dead-letter-routing-key` (string)<br>
 Optional replacement routing key to use when a message is dead-lettered. If this is not set, the message's original routing key will be used.<br>
 https://www.rabbitmq.com/dlx.html#routing
 

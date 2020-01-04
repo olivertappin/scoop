@@ -81,7 +81,7 @@ func main() {
         key, value := strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
 
         // Keep values as strings where the keys expect it
-        if key == "x-overflow" || key == "x-queue-mode" || key == "x-queue-master-locator" {
+        if key == "x-overflow" || key == "x-queue-mode" || key == "x-queue-master-locator" || key == "x-dead-letter-exchange" || key == "x-dead-letter-routing-key" {
             args[key] = value
             continue
         }
