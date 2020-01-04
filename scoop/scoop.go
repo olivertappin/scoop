@@ -22,6 +22,8 @@ func (i *arrayFlags) Set(value string) error {
 }
 
 var arguments arrayFlags
+var fromArguments arrayFlags
+var toArguments arrayFlags
 
 var (
     username         = flag.String("username", "guest", "Username")
@@ -30,7 +32,8 @@ var (
     port             = flag.String("port", "5672", "Port")
     fromQueueName    = flag.String("from", "", "The queue name to consume messages from")
     toQueueName      = flag.String("to", "", "The queue name to deliver messages to")
-    durable          = flag.Bool("durable", false, "Define the queue deceleration to be durable")
+    fromDurable      = flag.Bool("from-durable", false, "Define the from queue deceleration to be durable")
+    toDurable        = flag.Bool("to-durable", false, "Define the to queue deceleration to be durable")
     exchange         = flag.String("exchange", "", "The exchange name to deliver messages through")
     messageCount     = flag.Int("count", 1, "The number of messages to move between queues")
     verbose          = flag.Bool("v", false, "Turn on verbose mode")
@@ -39,7 +42,9 @@ var (
 )
 
 func init() {
-    flag.Var(&arguments, "arg", "Argument(s) to pass to the queue deceleration")
+    flag.Var(&arguments, "arg", "Argument(s) to pass to the queue decelerations")
+    flag.Var(&fromArguments, "from-arg", "Argument(s) to pass the queue deceleration which consumes messages")
+    flag.Var(&toArguments, "to-arg", "Argument(s) to pass to the queue deceleration which delivers messages")
     flag.Parse()
 }
 
@@ -75,31 +80,19 @@ func main() {
         os.Exit(2)
     }
 
-    args := make(amqp.Table)
+    fromArgs := make(amqp.Table)
+    toArgs := make(amqp.Table)
+
     for _, argument := range arguments {
-        parts := strings.Split(argument, ":")
-        key, value := strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
-
-        // Keep values as strings where the keys expect it
-        if key == "x-overflow" || key == "x-queue-mode" || key == "x-queue-master-locator" || key == "x-dead-letter-exchange" || key == "x-dead-letter-routing-key" {
-            args[key] = value
-            continue
-        }
-
-        // Cast values to integers where the keys expect it
-        i, err := strconv.Atoi(value)
-        if err != nil {
-            log.Fatalf("Argument with key \"%s\" does not have a valid integer value. Received: \"%s\"", key, value)
-        }
-        args[key] = i
+        fromArgs = mapQueueArguments(fromArgs, argument)
+        toArgs = mapQueueArguments(toArgs, argument)
 	}
-
-    if *extremelyVerbose && len(args) != 0 {
-        log.Printf("Declaring queues with the following arguments:")
-        for _, argument := range arguments {
-            log.Println("-", argument);
-        }
-    }
+    for _, fromArgument := range fromArguments {
+        fromArgs = mapQueueArguments(fromArgs, fromArgument)
+	}
+    for _, toArgument := range toArguments {
+        toArgs = mapQueueArguments(toArgs, toArgument)
+	}
 
     conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s/", *username, *password, *hostname, *port))
     failOnError(err, "Failed to connect to RabbitMQ")
@@ -117,13 +110,20 @@ func main() {
     // To do this, add the additional argument of passive to true: https://github.com/streadway/amqp/blob/master/channel.go#L758
     // so if the queue does exist, the command fails (but we need the latest code for that)
 
+    if *extremelyVerbose && len(fromArgs) != 0 {
+        log.Printf("Declaring from queue with the following arguments:")
+        for key, argument := range fromArgs {
+            log.Println("-", key, ":", argument);
+        }
+    }
+
     fromQueue, err := ch.QueueDeclare(
         *fromQueueName, // name
-        *durable,       // durable
+        *fromDurable,   // durable
         false,          // delete when unused
         false,          // exclusive
         false,          // no-wait
-        args,           // arguments
+        fromArgs,       // arguments
     )
     failOnError(err, "Failed to declare a queue")
 
@@ -131,13 +131,20 @@ func main() {
         log.Printf("There are %d messages in queue %s", fromQueue.Messages, fromQueue.Name)
     }
 
+    if *extremelyVerbose && len(toArgs) != 0 {
+        log.Printf("Declaring to queue with the following arguments:")
+        for key, argument := range toArgs {
+            log.Println("-", key, ":", argument);
+        }
+    }
+
     toQueue, err := ch.QueueDeclare(
         *toQueueName, // name
-        *durable,     // durable
+        *toDurable,   // durable
         false,        // delete when unused
         false,        // exclusive
         false,        // no-wait
-        args,         // arguments
+        toArgs,       // arguments
     )
     failOnError(err, "Failed to declare a queue")
 
@@ -187,6 +194,25 @@ func main() {
         d.Ack(true)
         i++
     }
+}
+
+func mapQueueArguments(arguments amqp.Table, argument string) amqp.Table {
+    parts := strings.Split(argument, ":")
+    key, value := strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
+
+    // Keep values as strings where the keys expect it
+    if key == "x-overflow" || key == "x-queue-mode" || key == "x-queue-master-locator" || key == "x-dead-letter-exchange" || key == "x-dead-letter-routing-key" {
+        arguments[key] = value
+        return arguments
+    }
+
+    // Cast values to integers where the keys expect it
+    i, err := strconv.Atoi(value)
+    if err != nil {
+        log.Fatalf("Argument with key \"%s\" does not have a valid integer value. Received: \"%s\"", key, value)
+    }
+    arguments[key] = i
+    return arguments
 }
 
 func failOnError(err error, msg string) {

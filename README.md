@@ -50,7 +50,7 @@ To run Scoop directly via the source code, run:
 
 ```bash
 cd path/to/scoop
-go run src/scoop.go \
+go run scoop/scoop.go \
   -from <from-queue-name> \
   -to <to-queue-name> \
   -count <number-of-messages-to-move> \
@@ -64,9 +64,12 @@ go run src/scoop.go \
 - `port` - The port to connect to (default: `5672`)
 - `from` - The queue name to consume messages from (required)
 - `to` - The queue name to deliver messages to (required)
-- `durable` - Define the queue deceleration to be durable (default: `false`)
+- `from-durable` - Define the from queue deceleration to be durable (default: `false`)
+- `to-durable` - Define the to queue deceleration to be durable (default: `false`)
+- `arg` - Argument(s) to pass to the from queue deceleration (default: `""`)
+- `from-arg` - Argument(s) to pass the queue deceleration which consumes messages; overrides values set by `arg` (default: `""`)
+- `to-arg` - Argument(s) to pass to the queue deceleration which delivers messages; overrides values set by `arg` (default: `""`)
 - `exchange` - The exchange name to deliver messages through (default: `""`)
-- `arg` - Argument(s) to pass to the queue deceleration (default: `""`)
 - `count` - The _maximum_ number of messages to move (default: `1`)
 - `v` - Turn on verbose mode (default: `false`)
 - `vv` - Turn on very verbose mode (default: `false`)
@@ -131,6 +134,10 @@ The above values can be passed into the `arg` argument. An example of how this c
   -vvv
 ```
 
+You can use the `-from-arg` and `-to-arg` in exactly the same way, but these definitions will be separated between the to and from queues.
+
+Any values defined by the `-from-arg` and `-to-arg` will override values set by the `-arg` parameter.
+
 ## Notes
 
 Scoop attempts to achieve shovelling with the important option of being able to control how many messages are shovelled into another queue.
@@ -164,7 +171,7 @@ pull-request into the master branch for review.
 Before pushing your changes, ensure you have compiled the binary file using:
 
 ```bash
-go build -o bin/scoop src/scoop.go
+go build -o bin/scoop scoop/scoop.go
 ```
 
 All contributions, no matter how large or small, are welcome.
