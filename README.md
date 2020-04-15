@@ -61,7 +61,7 @@ go run scoop/scoop.go \
 
 Below you can find a short demo video showing a hands-on tutorial on how to use Scoop:
 
-[![Scoop Demo Video](https://user-images.githubusercontent.com/9773040/79385999-628a2f80-7f61-11ea-992e-db61d5d328eb.png)](https://www.youtube.com/watch?v=szeb9WPhFYo)
+[![Scoop Demo Video](https://user-images.githubusercontent.com/9773040/79386188-b09f3300-7f61-11ea-87f2-0046e4f65378.png)](https://www.youtube.com/watch?v=szeb9WPhFYo)
 
 ## Arguments
 - `username` - The username used to connect (default: `guest`)
