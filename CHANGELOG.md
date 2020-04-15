@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2020-04-15
+### Added
+- Video tutorial to show basic usage and embedded within `README.md`.
+
+### Changed
+- Change 'Notes' anchor to 'FAQs' within `README.md`.
+- Add additional sections under new FAQs anchor in `README.md`.
+
 ## [2.0.0] - 2020-01-04
 ### Added
 - New `to-arg` and `from-arg` arguments to define individual, additional arguments for the queue decelerations.

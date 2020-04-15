@@ -24,7 +24,7 @@ It's written in Golang and is distributed as a binary package for all supported 
 To download Scoop via the command line, run:
 
 ```bash
-curl -LOs https://raw.githubusercontent.com/olivertappin/scoop/2.0.0/bin/scoop
+curl -LOs https://raw.githubusercontent.com/olivertappin/scoop/2.0.1/bin/scoop
 sudo chmod 755 scoop
 ```
 
@@ -56,6 +56,12 @@ go run scoop/scoop.go \
   -count <number-of-messages-to-move> \
   -vvv
 ```
+
+## Demo
+
+Below you can find a short demo video showing a hands-on tutorial on how to use Scoop:
+
+[![Scoop Demo Video](https://img.youtube.com/vi/szeb9WPhFYo/0.jpg)](https://www.youtube.com/watch?v=szeb9WPhFYo)
 
 ## Arguments
 - `username` - The username used to connect (default: `guest`)
@@ -138,7 +144,17 @@ You can use the `-from-arg` and `-to-arg` in exactly the same way, but these def
 
 Any values defined by the `-from-arg` and `-to-arg` will override values set by the `-arg` parameter.
 
-## Notes
+## FAQs
+
+### Why does the scoop consumer stay connected?
+
+The very nature of scoop is to run as a consumer, until it's delivered what it's been told. If you ask it to move 100 messages, and there are only 50 messages in the queue, it will keep hold of the connection until it's moved another 50. You can of course cancel the scoop consumer (via ctrl-C) or keep it connected until another 50 messages come into the queue to be moved across.
+
+### Known limitations
+
+When you define a queue name that does not currently exist, scoop will create it for you. This is down to the fundamentals of declaring a queue over the AMQP protocol. In future, validation may be added to check the existance of a queue before declaring it.
+
+### Can this be achieved without scoop?
 
 Scoop attempts to achieve shovelling with the important option of being able to control how many messages are shovelled into another queue.
 
