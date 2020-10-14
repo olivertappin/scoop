@@ -32,7 +32,7 @@ var (
     port             = flag.String("port", "5672", "Port")
     fromQueueName    = flag.String("from", "", "The queue name to consume messages from")
     toQueueName      = flag.String("to", "", "The queue name to deliver messages to")
-    contentType      = flag.string("content-type", "text/plain", "The content_type to use when publishing messages")
+    contentType      = flag.String("content-type", "text/plain", "The content_type to use when publishing messages")
     fromDurable      = flag.Bool("from-durable", false, "Define the from queue deceleration to be durable")
     toDurable        = flag.Bool("to-durable", false, "Define the to queue deceleration to be durable")
     exchange         = flag.String("exchange", "", "The exchange name to deliver messages through")
