@@ -102,7 +102,7 @@ func main() {
     defer consumerConnection.Close()
 
     publisherConnection, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s/", *username, *password, *hostname, *port))
-    failOnError(err, "Failed to create the consumer connection to RabbitMQ")
+    failOnError(err, "Failed to create the publisher connection to RabbitMQ")
     defer publisherConnection.Close()
 
     consumerChannel, err := consumerConnection.Channel()
