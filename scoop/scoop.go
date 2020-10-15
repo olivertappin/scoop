@@ -100,13 +100,24 @@ func main() {
         toArgs = mapQueueArguments(toArgs, toArgument)
 	  }
 
-    conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s/", *username, *password, *hostname, *port))
-    failOnError(err, "Failed to connect to RabbitMQ")
-    defer conn.Close()
+    // It's advisable to use separate connections for Channel.Publish and Channel.Consume so not to have TCP pushback
+    // on publishing affect the ability to consume messages: https://godoc.org/github.com/streadway/amqp#Channel.Consume
 
-    ch, err := conn.Channel()
-    failOnError(err, "Failed to open a channel")
-    defer ch.Close()
+    consumerConnection, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s/", *username, *password, *hostname, *port))
+    failOnError(err, "Failed to create the consumer connection to RabbitMQ")
+    defer consumerConnection.Close()
+
+    publisherConnection, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s/", *username, *password, *hostname, *port))
+    failOnError(err, "Failed to create the publisher connection to RabbitMQ")
+    defer publisherConnection.Close()
+
+    consumerChannel, err := consumerConnection.Channel()
+    failOnError(err, "Failed to open the consumer channel")
+    defer consumerChannel.Close()
+
+    publisherChannel, err := publisherConnection.Channel()
+    failOnError(err, "Failed to open the publisher channel")
+    defer publisherChannel.Close()
 
     if *verbose {
         log.Printf("Moving %d messages from queue %s to %s", *messageCount, *fromQueueName, *toQueueName)
@@ -123,7 +134,7 @@ func main() {
         }
     }
 
-    fromQueue, err := ch.QueueDeclare(
+    fromQueue, err := consumerChannel.QueueDeclare(
         *fromQueueName, // name
         *fromDurable,   // durable
         false,          // delete when unused
@@ -144,7 +155,7 @@ func main() {
         }
     }
 
-    toQueue, err := ch.QueueDeclare(
+    toQueue, err := publisherChannel.QueueDeclare(
         *toQueueName, // name
         *toDurable,   // durable
         false,        // delete when unused
@@ -158,7 +169,7 @@ func main() {
         log.Printf("There are %d messages in queue %s", toQueue.Messages, toQueue.Name)
     }
 
-    msgs, err := ch.Consume(
+    msgs, err := consumerChannel.Consume(
         fromQueue.Name, // queue
         "",             // consumer
         false,          // auto-ack (it's very important this stays false)
@@ -181,7 +192,7 @@ func main() {
             break
         }
 
-        err = ch.Publish(
+        err = publisherChannel.Publish(
             *exchange,    // exchange
             toQueue.Name, // routing key
             false,        // mandatory
