@@ -13,7 +13,7 @@ they are building up.
 
 After many '/' vhost errors, and your cluster looking more unhealthy by the minute, you may want
 to rearrange where some of your messages are being distributed to. With the shovel plugin, you have no choice but to
-shovel all your messages. Scoop solves this by giving you the option of how many you want to move around at a time. 
+shovel all your messages. Scoop solves this by giving you the option of how many you want to move around at a time.
 
 ### Tell me more!
 

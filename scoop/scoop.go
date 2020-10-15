@@ -32,6 +32,7 @@ var (
     port             = flag.String("port", "5672", "Port")
     fromQueueName    = flag.String("from", "", "The queue name to consume messages from")
     toQueueName      = flag.String("to", "", "The queue name to deliver messages to")
+    contentType      = flag.String("content-type", "text/plain", "The content_type to use when publishing messages")
     fromDurable      = flag.Bool("from-durable", false, "Define the from queue deceleration to be durable")
     toDurable        = flag.Bool("to-durable", false, "Define the to queue deceleration to be durable")
     exchange         = flag.String("exchange", "", "The exchange name to deliver messages through")
@@ -80,19 +81,24 @@ func main() {
         os.Exit(2)
     }
 
+    if *contentType == "" {
+        log.Printf("The content type must not be empty")
+        os.Exit(2)
+    }
+
     fromArgs := make(amqp.Table)
     toArgs := make(amqp.Table)
 
     for _, argument := range arguments {
         fromArgs = mapQueueArguments(fromArgs, argument)
         toArgs = mapQueueArguments(toArgs, argument)
-	}
+	  }
     for _, fromArgument := range fromArguments {
         fromArgs = mapQueueArguments(fromArgs, fromArgument)
-	}
+	  }
     for _, toArgument := range toArguments {
         toArgs = mapQueueArguments(toArgs, toArgument)
-	}
+	  }
 
     conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s/", *username, *password, *hostname, *port))
     failOnError(err, "Failed to connect to RabbitMQ")
@@ -181,7 +187,7 @@ func main() {
             false,        // mandatory
             false,        // immediate
             amqp.Publishing{
-                ContentType: "text/plain",
+                ContentType: *contentType,
                 Body:        []byte(d.Body),
             })
 
