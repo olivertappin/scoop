@@ -5,6 +5,7 @@ import (
     "flag"
     "os"
     "fmt"
+    "os/signal"
     "strings"
     "strconv"
     "github.com/streadway/amqp"
@@ -24,6 +25,7 @@ func (i *arrayFlags) Set(value string) error {
 var arguments arrayFlags
 var fromArguments arrayFlags
 var toArguments arrayFlags
+var terminate bool = false
 
 var (
     username         = flag.String("username", "guest", "Username")
@@ -32,7 +34,6 @@ var (
     port             = flag.String("port", "5672", "Port")
     fromQueueName    = flag.String("from", "", "The queue name to consume messages from")
     toQueueName      = flag.String("to", "", "The queue name to deliver messages to")
-    contentType      = flag.String("content-type", "text/plain", "The content_type to use when publishing messages")
     fromDurable      = flag.Bool("from-durable", false, "Define the from queue deceleration to be durable")
     toDurable        = flag.Bool("to-durable", false, "Define the to queue deceleration to be durable")
     exchange         = flag.String("exchange", "", "The exchange name to deliver messages through")
@@ -81,24 +82,28 @@ func main() {
         os.Exit(2)
     }
 
-    if *contentType == "" {
-        log.Printf("The content type must not be empty")
-        os.Exit(2)
-    }
-
     fromArgs := make(amqp.Table)
     toArgs := make(amqp.Table)
 
     for _, argument := range arguments {
         fromArgs = mapQueueArguments(fromArgs, argument)
         toArgs = mapQueueArguments(toArgs, argument)
-	  }
+    }
     for _, fromArgument := range fromArguments {
         fromArgs = mapQueueArguments(fromArgs, fromArgument)
-	  }
+    }
     for _, toArgument := range toArguments {
         toArgs = mapQueueArguments(toArgs, toArgument)
-	  }
+    }
+
+    c := make(chan os.Signal, 1)
+    signal.Notify(c, os.Interrupt)
+    go func() {
+        for sig := range c {
+            terminate = true
+            log.Printf("Finishing up ... (%v detected)", sig)
+        }
+    }()
 
     // It's advisable to use separate connections for Channel.Publish and Channel.Consume so not to have TCP pushback
     // on publishing affect the ability to consume messages: https://godoc.org/github.com/streadway/amqp#Channel.Consume
@@ -124,7 +129,8 @@ func main() {
     }
 
     // Check if the queue exists, otherwise, fail
-    // To do this, add the additional argument of passive to true: https://github.com/streadway/amqp/blob/master/channel.go#L758
+    // To do this, add the additional argument of passive to true. See:
+    // https://github.com/streadway/amqp/blob/master/channel.go#L758
     // so if the queue does exist, the command fails (but we need the latest code for that)
 
     if *extremelyVerbose && len(fromArgs) != 0 {
@@ -169,7 +175,7 @@ func main() {
         log.Printf("There are %d messages in queue %s", toQueue.Messages, toQueue.Name)
     }
 
-    msgs, err := consumerChannel.Consume(
+    messages, err := consumerChannel.Consume(
         fromQueue.Name, // queue
         "",             // consumer
         false,          // auto-ack (it's very important this stays false)
@@ -182,13 +188,26 @@ func main() {
 
     log.Printf("Running scoop consumer... (press Ctl-C to cancel)")
 
+    confirms := publisherChannel.NotifyPublish(make(chan amqp.Confirmation, 1))
+
+    if err := publisherChannel.Confirm(false); err != nil {
+        log.Fatalf("Unable to put publisher channel into confirm mode: %s", err)
+    }
+
     i := 1
 
-    for d := range msgs {
+    for {
+        message, ok := <-messages
+        if !ok {
+            log.Printf("The consumer channel was unexpectedly closed")
+            break
+        }
+
+        if terminate {
+            break
+        }
+
         if i > *messageCount {
-            if *extremelyVerbose {
-                log.Printf("Complete")
-            }
             break
         }
 
@@ -198,18 +217,45 @@ func main() {
             false,        // mandatory
             false,        // immediate
             amqp.Publishing{
-                ContentType: *contentType,
-                Body:        []byte(d.Body),
+                ContentType:     message.ContentType,
+                ContentEncoding: message.ContentEncoding,
+                DeliveryMode:    message.DeliveryMode,
+                Priority:        message.Priority,
+                CorrelationId:   message.CorrelationId,
+                ReplyTo:         message.ReplyTo,
+                Expiration:      message.Expiration,
+                MessageId:       message.MessageId,
+                Timestamp:       message.Timestamp,
+                Type:            message.Type,
+                UserId:          message.UserId,
+                AppId:           message.AppId,
+                Headers:         message.Headers,
+                Body:            message.Body,
             })
 
-        failOnError(err, "Failed to deliver message")
-
-        if *extremelyVerbose {
-            log.Printf("Successfully delivered message (%d/%d)", i, *messageCount)
+        if err != nil {
+            message.Nack(false, false)
+            log.Printf("Failed to deliver message")
+            break
         }
 
-        d.Ack(true)
-        i++
+        if confirmed := <-confirms; confirmed.Ack {
+            message.Ack(false)
+            if *extremelyVerbose {
+                log.Printf("Successfully delivered message (%d/%d)", i, *messageCount)
+            }
+            i++
+            continue
+        }
+
+        message.Nack(false, false)
+        if *extremelyVerbose {
+            log.Printf("Failed to deliver message ... refused to acknowledge delivery")
+        }
+    }
+
+    if *verbose {
+        log.Printf("Complete")
     }
 }
 
@@ -232,8 +278,8 @@ func mapQueueArguments(arguments amqp.Table, argument string) amqp.Table {
     return arguments
 }
 
-func failOnError(err error, msg string) {
+func failOnError(err error, message string) {
     if err != nil {
-        log.Fatalf("%s: %s", msg, err)
+        log.Fatalf("%s: %s", message, err)
     }
 }

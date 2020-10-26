@@ -1,5 +1,11 @@
 # Scoop
 
+Move a specified number of messages from one queue to another over the Advanced Message Queuing Protocol (AMQP).
+
+[![Go Report Card](https://goreportcard.com/badge/github.com/olivertappin/scoop)](https://goreportcard.com/report/github.com/olivertappin/scoop)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/olivertappin/scoop/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/olivertappin/scoop/?branch=master)
+[![GitHub release](https://img.shields.io/github/release/olivertappin/scoop.svg?style=flat-square)](https://github.com/olivertappin/scoop/releases)
+
 ## Introduction
 
 Scoop was created to solve the problem of shovelling messages from one queue to another, with the option of choosing how
@@ -24,7 +30,7 @@ It's written in Golang and is distributed as a binary package for all supported 
 To download Scoop via the command line, run:
 
 ```bash
-curl -LOs https://raw.githubusercontent.com/olivertappin/scoop/2.0.1/bin/scoop
+curl -LOs https://raw.githubusercontent.com/olivertappin/scoop/2.1.0/bin/scoop
 sudo chmod 755 scoop
 ```
 
@@ -70,7 +76,7 @@ Below you can find a short demo video showing a hands-on tutorial on how to use 
 - `port` - The port to connect to (default: `5672`)
 - `from` - The queue name to consume messages from (required)
 - `to` - The queue name to deliver messages to (required)
-- `from-durable` - Define the from queue deceleration to be durable (default: `false`)
+- `from-durable` - Define the from queue dece leration to be durable (default: `false`)
 - `to-durable` - Define the to queue deceleration to be durable (default: `false`)
 - `arg` - Argument(s) to pass to the from queue deceleration (default: `""`)
 - `from-arg` - Argument(s) to pass the queue deceleration which consumes messages; overrides values set by `arg` (default: `""`)

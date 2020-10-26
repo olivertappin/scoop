@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2020-10-26
+### Added
+- Appropriate signal handling to cleanly finish message delivery and close channels and connections. 
+  ([#4](https://github.com/olivertappin/scoop/issues/4))
+- Separate consumer and publisher channels and connections. ([#4](https://github.com/olivertappin/scoop/issues/4))
+- MIT Licence as a markdown file.
+- Appropriate badges at the top of `README.md`.
+
+### Changed
+- Separate consumer and publisher connections and channels. ([#2](https://github.com/olivertappin/scoop/issues/2))
+- Address lack of additional message detail. ([#1](https://github.com/olivertappin/scoop/issues/1))
+
 ## [2.0.1] - 2020-04-15
 ### Added
 - Video tutorial to show basic usage and embedded within `README.md`.
