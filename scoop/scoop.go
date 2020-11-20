@@ -181,8 +181,20 @@ func main() {
             false,        // mandatory
             false,        // immediate
             amqp.Publishing{
-                ContentType: "text/plain",
-                Body:        []byte(d.Body),
+                ContentType:     d.ContentType,
+                ContentEncoding: d.ContentEncoding,
+                DeliveryMode:    d.DeliveryMode,
+                Priority:        d.Priority,
+                CorrelationId:   d.CorrelationId,
+                ReplyTo:         d.ReplyTo,
+                Expiration:      d.Expiration,
+                MessageId:       d.MessageId,
+                Timestamp:       d.Timestamp,
+                Type:            d.Type,
+                UserId:          d.UserId,
+                AppId:           d.AppId,
+                Headers:         d.Headers,
+                Body:            d.Body,
             })
 
         failOnError(err, "Failed to deliver message")

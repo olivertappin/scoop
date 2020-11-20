@@ -24,7 +24,7 @@ It's written in Golang and is distributed as a binary package for all supported 
 To download Scoop via the command line, run:
 
 ```bash
-curl -LOs https://raw.githubusercontent.com/olivertappin/scoop/2.0.1/bin/scoop
+curl -LOs https://raw.githubusercontent.com/olivertappin/scoop/2.0.2/bin/scoop
 sudo chmod 755 scoop
 ```
 
